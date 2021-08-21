@@ -22,9 +22,13 @@ export default function PathfindingVisualiser() {
   const [HashMap, setHashMap] = useState(null);
   const hashMap = new Map();
   useEffect(() => {
+    console.log(typeof StartRow);
     const curLocation = localStorage.getItem(LocalStorageKey);
     const CurLocation = JSON.parse(curLocation);
-    const { sRow, sCol, eRow, eCol } = CurLocation;
+    const sRow = parseInt(CurLocation[0]);
+    const sCol = parseInt(CurLocation[1]);
+    const eRow = parseInt(CurLocation[2]);
+    const eCol = parseInt(CurLocation[3]);
     if (sRow !== undefined) setStartCol(sCol);
     if (sCol !== undefined) setStartRow(sRow);
     if (eRow !== undefined) setEndCol(eCol);
@@ -34,12 +38,7 @@ export default function PathfindingVisualiser() {
   }, []);
 
   useEffect(() => {
-    const location = {
-      sRow: StartRow,
-      sCol: StartCol,
-      eRow: EndRow,
-      eCol: EndCol,
-    };
+    const location = [StartRow, StartCol, EndRow, EndCol];
     localStorage.setItem(LocalStorageKey, JSON.stringify(location));
   }, [StartRow, StartCol, EndRow, EndCol]);
 
@@ -301,7 +300,7 @@ export default function PathfindingVisualiser() {
         {grid.map((row, rowInd) => (
           <div className="grid-rows" key={rowInd}>
             {row.map((node, colInd) =>
-              rowInd == StartRow && colInd == StartCol ? (
+              rowInd === StartRow && colInd === StartCol ? (
                 <div
                   className="grid-node"
                   ref={(el) => {
@@ -314,7 +313,7 @@ export default function PathfindingVisualiser() {
                 >
                   <FaArrowRight className="icons" />
                 </div>
-              ) : rowInd == EndRow && colInd == EndCol ? (
+              ) : rowInd === EndRow && colInd === EndCol ? (
                 <div
                   className="grid-node"
                   ref={(el) => {
