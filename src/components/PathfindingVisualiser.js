@@ -105,6 +105,12 @@ export default function PathfindingVisualiser() {
         curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
         if (i === animations.length - 1) {
           const shortestPathArray = shortestPathNodes(endNode);
+          if (
+            shortestPathArray.length === 1 &&
+            shortestPathArray[0].prev === null
+          ) {
+            toast("No Path Found", { type: "error" });
+          }
           for (let j = 0; j < shortestPathArray.length; j++) {
             const { row, col } = shortestPathArray[j];
             setTimeout(() => {
@@ -129,6 +135,12 @@ export default function PathfindingVisualiser() {
         curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
         if (i === animations.length - 1) {
           const shortestPathArray = shortestPathNodesDFS(endNode);
+          if (
+            shortestPathArray.length === 1 &&
+            shortestPathArray[0].prev === null
+          ) {
+            toast("No Path Found", { type: "error" });
+          }
           for (let j = 0; j < shortestPathArray.length; j++) {
             const { row, col } = shortestPathArray[j];
             setTimeout(() => {
@@ -153,6 +165,12 @@ export default function PathfindingVisualiser() {
         curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
         if (i === animations.length - 1) {
           const shortestPathArray = shortestPathNodesBFS(endNode);
+          if (
+            shortestPathArray.length === 1 &&
+            shortestPathArray[0].prev === null
+          ) {
+            toast("No Path Found", { type: "error" });
+          }
           for (let j = 0; j < shortestPathArray.length; j++) {
             const { row, col } = shortestPathArray[j];
             setTimeout(() => {
