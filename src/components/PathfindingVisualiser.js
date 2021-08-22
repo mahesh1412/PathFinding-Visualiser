@@ -96,6 +96,12 @@ export default function PathfindingVisualiser() {
   const DijkstraVisualisation = () => {
     const startNode = grid[StartRow][StartCol];
     const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
     const animations = DijkstraAlgo(grid, startNode, endNode);
     for (let i = 0; i < animations.length; i++) {
       const { row, col } = animations[i];
@@ -126,6 +132,12 @@ export default function PathfindingVisualiser() {
   const DFSvisualisation = () => {
     const startNode = grid[StartRow][StartCol];
     const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
     const animations = DFSAlgo(grid, startNode, endNode);
     for (let i = 0; i < animations.length; i++) {
       const { row, col } = animations[i];
@@ -155,6 +167,12 @@ export default function PathfindingVisualiser() {
   const BFSvisualisation = () => {
     const startNode = grid[StartRow][StartCol];
     const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
     const animations = BFSAlgo(grid, startNode, endNode);
     console.log(animations);
     for (let i = 0; i < animations.length; i++) {
