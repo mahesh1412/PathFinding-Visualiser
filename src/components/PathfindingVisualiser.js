@@ -16,10 +16,13 @@ export default function PathfindingVisualiser() {
   const [StartCol, setStartCol] = useState(15);
   const [EndRow, setEndRow] = useState(10);
   const [EndCol, setEndCol] = useState(45);
-
-  const gridRef = useRef([]);
+  const [startNodeClicked, setStartNodeClicked] = useState(false);
+  const [EndNodeClicked, setEndNodeClicked] = useState(false);
   const [mouseMove, setMouseMove] = useState(false);
   const [HashMap, setHashMap] = useState(null);
+  const [isAlgoRunning, setIsAlgoRunning] = useState(false);
+  const gridRef = useRef([]);
+
   const hashMap = new Map();
   useEffect(() => {
     console.log(typeof StartRow);
@@ -40,7 +43,7 @@ export default function PathfindingVisualiser() {
   useEffect(() => {
     const location = [StartRow, StartCol, EndRow, EndCol];
     localStorage.setItem(LocalStorageKey, JSON.stringify(location));
-  }, [StartRow, StartCol, EndRow, EndCol]);
+  }, [StartRow, StartCol, EndRow, EndCol, grid]);
 
   const initializeGrid = () => {
     const tempGrid = [];
@@ -52,6 +55,18 @@ export default function PathfindingVisualiser() {
       tempGrid.push(rows);
     }
     setGrid(tempGrid);
+  };
+  const clearGridColor = () => {
+    for (let i = 0; i < 24; i++) {
+      for (let j = 0; j < 65; j++) {
+        const curRef = gridRef.current[i * grid[0].length + j];
+        if (grid[i][j].isWall === false)
+          curRef.style.backgroundColor = "transparent";
+        grid[i][j].visited = false;
+        grid[i][j].distance = 10000000;
+        grid[i][j].prev = null;
+      }
+    }
   };
   const buildNode = (row, col) => {
     const Node = {
@@ -77,20 +92,66 @@ export default function PathfindingVisualiser() {
     setHashMap(hashMap);
     setMouseMove(true);
     const location = hashMap.get(e.target);
-    e.target.style.backgroundColor = "#ffc600";
-    grid[location[0]][location[1]].isWall = true;
+    if (location === undefined) {
+      return;
+    } else {
+      e.target.style.backgroundColor = "#ffc600";
+      grid[location[0]][location[1]].isWall = true;
+    }
   };
   const handleOnMouseMoveEvent = (e) => {
-    if (mouseMove) {
+    if (mouseMove === true) {
       const location = HashMap.get(e.target);
-      e.target.style.backgroundColor = "#ffc600";
       if (location !== undefined) {
-        grid[location[0]][location[1]].isWall = true;
+        if (startNodeClicked) {
+          grid[StartRow][StartCol].start = false;
+          grid[location[0]][location[1]].start = true;
+          clearGridColor();
+          setStartRow(location[0]);
+          setStartCol(location[1]);
+          if (isAlgoRunning) {
+            switch (algo) {
+              case "Dijkstra":
+                return DijkstraVisualisationUtil();
+              case "DFS":
+                return DFSvisualisationUtil();
+              case "BFS":
+                return BFSvisualisationUtil();
+              default:
+                return;
+            }
+          }
+          return;
+        } else if (EndNodeClicked) {
+          grid[StartRow][StartCol].end = false;
+          grid[location[0]][location[1]].end = true;
+          clearGridColor();
+          setEndRow(location[0]);
+          setEndCol(location[1]);
+          if (isAlgoRunning) {
+            switch (algo) {
+              case "Dijkstra":
+                return DijkstraVisualisationUtil();
+              case "DFS":
+                return DFSvisualisationUtil();
+              case "BFS":
+                return BFSvisualisationUtil();
+              default:
+                return;
+            }
+          }
+          return;
+        } else {
+          e.target.style.backgroundColor = "#ffc600";
+          grid[location[0]][location[1]].isWall = true;
+        }
       }
     }
   };
-  const handleOnMouseUpEvent = (e) => {
-    setMouseMove(false);
+  const handleOnMouseUpEvent = async (e) => {
+    await setMouseMove(false);
+    await setEndNodeClicked(false);
+    await setStartNodeClicked(false);
   };
 
   const DijkstraVisualisation = () => {
@@ -127,6 +188,7 @@ export default function PathfindingVisualiser() {
         }
       }, i * -speed);
     }
+    setIsAlgoRunning(true);
   };
 
   const DFSvisualisation = () => {
@@ -163,6 +225,7 @@ export default function PathfindingVisualiser() {
         }
       }, i * -speed);
     }
+    setIsAlgoRunning(true);
   };
   const BFSvisualisation = () => {
     const startNode = grid[StartRow][StartCol];
@@ -174,7 +237,6 @@ export default function PathfindingVisualiser() {
       return;
     }
     const animations = BFSAlgo(grid, startNode, endNode);
-    console.log(animations);
     for (let i = 0; i < animations.length; i++) {
       const { row, col } = animations[i];
       setTimeout(() => {
@@ -199,7 +261,107 @@ export default function PathfindingVisualiser() {
         }
       }, i * -speed);
     }
+    setIsAlgoRunning(true);
   };
+
+  const DijkstraVisualisationUtil = () => {
+    const startNode = grid[StartRow][StartCol];
+    const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
+    const animations = DijkstraAlgo(grid, startNode, endNode);
+    for (let i = 0; i < animations.length; i++) {
+      const { row, col } = animations[i];
+      const curRef = gridRef.current[row * grid[0].length + col];
+      curRef.style.backgroundColor = "gray";
+      curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
+      if (i === animations.length - 1) {
+        const shortestPathArray = shortestPathNodes(endNode);
+        if (
+          shortestPathArray.length === 1 &&
+          shortestPathArray[0].prev === null
+        ) {
+          toast("No Path Found", { type: "error" });
+        }
+        for (let j = 0; j < shortestPathArray.length; j++) {
+          const { row, col } = shortestPathArray[j];
+          const curRef = gridRef.current[row * grid[0].length + col];
+          curRef.style.backgroundColor = "hsl(194, 86%, 51%)";
+        }
+      }
+    }
+    setIsAlgoRunning(true);
+  };
+
+  const DFSvisualisationUtil = () => {
+    const startNode = grid[StartRow][StartCol];
+    const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
+    const animations = DFSAlgo(grid, startNode, endNode);
+    for (let i = 0; i < animations.length; i++) {
+      const { row, col } = animations[i];
+      const curRef = gridRef.current[row * grid[0].length + col];
+      curRef.style.backgroundColor = "gray";
+      curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
+      if (i === animations.length - 1) {
+        const shortestPathArray = shortestPathNodesDFS(endNode);
+        if (
+          shortestPathArray.length === 1 &&
+          shortestPathArray[0].prev === null
+        ) {
+          toast("No Path Found", { type: "error" });
+        }
+        for (let j = 0; j < shortestPathArray.length; j++) {
+          const { row, col } = shortestPathArray[j];
+          const curRef = gridRef.current[row * grid[0].length + col];
+          curRef.style.backgroundColor = "hsl(194, 86%, 51%)";
+        }
+      }
+    }
+    setIsAlgoRunning(true);
+  };
+  const BFSvisualisationUtil = () => {
+    const startNode = grid[StartRow][StartCol];
+    const endNode = grid[EndRow][EndCol];
+    if (startNode.isWall || endNode.isWall) {
+      toast("No path found, StartNode or EndNode can't be an Obstacle", {
+        type: "error",
+      });
+      return;
+    }
+    const animations = BFSAlgo(grid, startNode, endNode);
+    for (let i = 0; i < animations.length; i++) {
+      const { row, col } = animations[i];
+      const curRef = gridRef.current[row * grid[0].length + col];
+      curRef.style.backgroundColor = "gray";
+      curRef.style.backgroundColor = "hsl(277, 96%, 49%)";
+      if (i === animations.length - 1) {
+        const shortestPathArray = shortestPathNodesBFS(endNode);
+        if (
+          shortestPathArray.length === 1 &&
+          shortestPathArray[0].prev === null
+        ) {
+          toast("No Path Found", { type: "error" });
+        }
+        for (let j = 0; j < shortestPathArray.length; j++) {
+          const { row, col } = shortestPathArray[j];
+          const curRef = gridRef.current[row * grid[0].length + col];
+          curRef.style.backgroundColor = "hsl(194, 86%, 51%)";
+        }
+      }
+    }
+    setIsAlgoRunning(true);
+  };
+
   const handleOnClickEvent = () => {
     switch (algo) {
       case "Dijkstra":
@@ -219,21 +381,13 @@ export default function PathfindingVisualiser() {
     }
   };
 
-  const handleInputStartRow = (e) => {
-    setStartRow(e.target.value);
-    window.location.reload();
+  const handleStartNodeClicked = (e) => {
+    setStartNodeClicked(true);
+    handleOnMouseDownEvent(e);
   };
-  const handleInputStartCol = (e) => {
-    setStartCol(e.target.value);
-    window.location.reload();
-  };
-  const handleInputEndRow = (e) => {
-    setEndRow(e.target.value);
-    window.location.reload();
-  };
-  const handleInputEndCol = (e) => {
-    setEndCol(e.target.value);
-    window.location.reload();
+  const handleEndNodeClicked = (e) => {
+    setEndNodeClicked(true);
+    handleOnMouseDownEvent(e);
   };
   return (
     <div className="container">
@@ -241,9 +395,17 @@ export default function PathfindingVisualiser() {
         <div className="instructions">
           <h2>Instructions</h2>
           <ul>
-            <li>Select an Algorithm, Set Start and End points</li>
-            <li>Click and drag on grid to create obstacles if any</li>
-            <li>Adjust the speed and Click on visualise</li>
+            <li>Select an Algorithm, Adjust the speed</li>
+            <li>
+              Click and drag on Start and End Nodes to changes its position
+            </li>
+            <li>
+              Click and drag on grid to create obstacles if any and Visualize
+            </li>
+            <li>
+              Click and drag start and end points after running the algorithm if
+              you want to visualize different paths
+            </li>
           </ul>
         </div>
         <div className="algo-section">
@@ -280,42 +442,6 @@ export default function PathfindingVisualiser() {
           </label>
         </div>
         <div className="custom-section">
-          <div className="locations">
-            <label>Start Row</label>
-            <input
-              value={StartRow}
-              onChange={(e) => handleInputStartRow(e)}
-              type="number"
-              min="0"
-              max="23"
-            />
-            <label>Start Col</label>
-            <input
-              value={StartCol}
-              onChange={(e) => handleInputStartCol(e)}
-              type="number"
-              min="0"
-              max="64"
-            />
-          </div>
-          <div className="locations">
-            <label>End Row</label>
-            <input
-              value={EndRow}
-              onChange={(e) => handleInputEndRow(e)}
-              type="number"
-              min="0"
-              max="23"
-            />
-            <label>End Col</label>
-            <input
-              value={EndCol}
-              onChange={(e) => handleInputEndCol(e)}
-              type="number"
-              min="0"
-              max="64"
-            />
-          </div>
           <div className="speed">
             <label>Speed</label>
             <input
@@ -347,7 +473,10 @@ export default function PathfindingVisualiser() {
                   onMouseUp={(e) => handleOnMouseUpEvent(e)}
                   key={colInd}
                 >
-                  <FaArrowRight className="icons" />
+                  <FaArrowRight
+                    onMouseDown={(e) => handleStartNodeClicked(e)}
+                    className="icons"
+                  />
                 </div>
               ) : rowInd === EndRow && colInd === EndCol ? (
                 <div
@@ -360,7 +489,10 @@ export default function PathfindingVisualiser() {
                   onMouseUp={(e) => handleOnMouseUpEvent(e)}
                   key={colInd}
                 >
-                  <FaMapMarker className="icons" />
+                  <FaMapMarker
+                    onMouseDown={(e) => handleEndNodeClicked(e)}
+                    className="icons"
+                  />
                 </div>
               ) : (
                 <div
